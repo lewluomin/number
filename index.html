@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<title>Number Format</title>
+<!-- Required meta tags -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<!-- Bootstrap CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+
+</head>
+<body>
+<div class="container">
+	<br/>
+	<h2>Number Format</h2>
+	<form>
+		<div class="form-group">
+			<label for="numbers">Numbers:</label>
+			<textarea class="form-control" rows="5" id="numbers" placeholder="Example: 0163338888;0168886688;..."></textarea>
+		</div>
+		<div class="form-group">
+			<label for="formatNumbers">Format:</label>
+			<textarea class="form-control" rows="5" id="formatNumbers" placeholder="Formatted Numbers" disabled></textarea>
+		</div>
+		<button id="sendBtn" type="button" onclick="openWhatsapp();" class="btn btn-primary">Whatsapp</button>
+		<button id="vcfBtn" type="button" onclick="formatNumber('VCF');" class="btn btn-primary">VCF</button>
+		<!--button id="formatBtn" type="button" onclick="formatNumber('NORMAL');" class="btn btn-primary">Format</button-->
+		<button id="lineBtn" type="button" onclick="formatNumber('LINE');" class="btn btn-primary">Line</button>
+		<a id="url" href="#" target="_blank" style="display:none">Whatsapp</a>
+	</form>
+</div>
+
+	
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+
+<script type="text/javascript">
+	$(document).ready(function() {
+	});
+	
+	function sendMessage(){
+		
+		// get message
+		//var message = $('#message').val();
+		var message = " ";
+		
+		// validation
+		if(!message)
+		{
+			alert("Message fields are mandatory.");
+			return false;
+		}
+		
+		// encode message
+		var encodeMessage = encodeURI(message);
+		var url = "https://api.whatsapp.com/send?text="+ encodeMessage;
+		$('#url').attr('href', url);
+		document.getElementById("url").click();
+	}
+	
+	function openWhatsapp(){
+		var url = "https://web.whatsapp.com/";
+		$('#url').attr('href', url);
+		document.getElementById("url").click();
+	}
+	
+	function formatNumber(mode){
+		var numbers = document.getElementById("numbers").value;
+		if(numbers)
+		{
+			var numberList = numbers.split(";");
+			if(numberList)
+			{
+				var formattedNumber = "";
+				
+				if(mode == "LINE")
+				{
+					var pro = new Promise(
+						function (resolve, reject) {
+							var index = 0;
+							var loop = (function loop(z) {
+								formattedNumber += "number"+ index +"=";	
+								for (var i = 0; i < 900; i++) {
+									var number = numberList[z];
+									if(number && number.length >= 10)
+									{
+										number = number.trim();
+										number = number.replace(/(\d{1})(\d{2})(\d{3})(\d{4})/, "6$1 $2 $3 $4");
+										formattedNumber += number + ";";
+									}
+									z++;
+									if(z===numberList.length)
+									{
+										formattedNumber = "number=" + index + "\n" + formattedNumber + "\n";
+										resolve(formattedNumber);
+									}
+								}
+								index++;
+								formattedNumber += "\n";
+								setTimeout(function(){loop(z)},0);
+							})(0);
+						}
+					);
+					
+					pro.then(function(v) {
+						document.getElementById("formatNumbers").value = v;
+					});
+				}else
+				{
+					for(var i=0; i<numberList.length; i++)
+					{
+						var number = numberList[i].trim();
+						if(number && number.length >= 10)
+						{
+							if(mode == "NORMAL")
+							{
+								number = number.replace(/(\d{1})(\d{2})(\d{3})(\d{4})/, "+6$1 $2 $3 $4");
+								if(formattedNumber)
+									formattedNumber += "\n";
+								formattedNumber += number;
+							}else if(mode == "VCF")
+							{
+								number = number.replace(/(\d{1})(\d{2})(\d{3})(\d{4})/, "+6$1 $2 $3 $4");
+								if(formattedNumber)
+									formattedNumber += "\n";
+								formattedNumber += "BEGIN:VCARD"+ "\n" +"N;CHARSET=UTF-8:"+ number +"\n" +"TEL;CHARSET=UTF-8;TYPE=HOME:"+ number +"\n" +"END:VCARD"+ "\n";
+							}
+						}
+					}
+					document.getElementById("formatNumbers").value = formattedNumber;
+				}
+			}
+		}else
+		{
+			alert("Please input number.");
+		}
+	}
+</script>
+</body>
+</html>
